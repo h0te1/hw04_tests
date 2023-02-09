@@ -49,7 +49,7 @@ class PostTests(TestCase):
     def test_context_index(self):
         """Контекст в index"""
         response = self.authorized_client.get(reverse('posts:index'))
-        first_object = response.context['page_obj'][0]
+        first_object = response.context.get('page_obj')[0]
         post_text_0 = first_object.text
         post_author_0 = first_object.author.username
         post_group_0 = first_object.group.title
@@ -74,9 +74,9 @@ class PostTests(TestCase):
         """Контекст в profile"""
         response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': 'test_user'}))
-        first_object = response.context['page_obj'][0]
+        first_object = response.context.get('page_obj')[0]
         post_text_0 = first_object.text
-        self.assertEqual(response.context['author'].username, 'test_user')
+        self.assertEqual(response.context.get('author').username, 'test_user')
         self.assertEqual(post_text_0, 'Тестовая запись')
 
     # Проверяет содержимое страницы с деталями поста
@@ -123,7 +123,7 @@ class PostTests(TestCase):
         """Пост не попал в другую группу"""
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}))
-        first_object = response.context["page_obj"][0]
+        first_object = response.context.get("page_obj")[0]
         post_text_0 = first_object.text
         self.assertTrue(post_text_0, 'Тестовая запись')
 
