@@ -86,6 +86,7 @@ class PostTests(TestCase):
             reverse('posts:post_detail', kwargs={'post_id': '1'})
         ))
         page_obj = response.context.get('post')
+        print(response.context)
         # текст на странице сравниваем с текстом образца
         text = page_obj.text
         obrazec = Post.objects.get(id=1)
