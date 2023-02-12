@@ -1,11 +1,4 @@
 {% extends 'base.html' %}
-<!DOCTYPE html> 
-<html lang="ru"> 
-  <head>
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="theme-color" content="#ffffff">
-    <link rel="stylesheet" href="../css/bootstrap.min.css">
-    <title>
       {% block title %}
         {% if not is_edit %}
           Добавить запись
@@ -13,10 +6,6 @@
           Редактировать запись
         {% endif %}
       {% endblock %}
-    </title>
-  </head>
-  <body>
-    <main>
       {% block content %}
       <div class="container py-5">
         <div class="row justify-content-center">
@@ -31,24 +20,14 @@
               </div>
               <div class="card-body">  
                 {% load user_filters %} {# Загружаем фильтры #}
-                  {% if form.errors %}
-                    {% for field in form %}
-                      {% for error in field.errors %}
-                        <div class="alert alert-danger">
-                          {{ error|escape }}
-                        </div>
-                      {% endfor %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                      <div class="alert alert-danger">
-                        {{ error|escape }}
-                      </div>
-                    {% endfor %}
+                  {% include 'includes/errors.html'%}
+                  {% if not is_edit %}
+                    <form method="post" action="{% url 'posts:post_create' %}">
+                    {% csrf_token %}
+                  {% else %}
+                      <form method="post" action="{% url 'posts:post_edit' post_id %}">
+                    {% csrf_token %}
                   {% endif %}
-
-                  <form method="post" action="{% url 'posts:post_create' %}">
-                  {% csrf_token %}
-
                   {# Выводим поля в цикле, по отдельности #}
                   {% for field in form %}
                   <div class="form-group row my-3">
@@ -86,11 +65,3 @@
         </div>
       </div>
       {% endblock %}
-    </main>
-    {% block footer %}
-    <footer class="border-top text-center py-3">
-      <p>© {{ year }} Copyright <span style="color:red">Ya</span>tube</p>    
-    </footer>
-    {% endblock %}
-  </body>
-</html>

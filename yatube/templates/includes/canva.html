@@ -7,4 +7,9 @@
     Дата публикации: {{ post.pub_date|date:"d E Y" }}
   </li>
 </ul>
-<p>{{ post.text }}</p>
+<p>{{ post.text|linebreaks }}</p>
+<a class="nav-link {% if view_name  == 'posts:post_detail' %} active {% endif %}"
+  href="{% url 'posts:post_detail' post.id %}"
+>
+  детали
+</a>

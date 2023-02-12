@@ -1,10 +1,8 @@
-from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
-from posts.models import Post, Group
 from django import forms
 
-User = get_user_model()
+from posts.models import Post, Group, User
 
 
 class PostTests(TestCase):
@@ -12,38 +10,20 @@ class PostTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         # Создаю группу, текст и автора уже внутри поста
+        cls.group = Group.objects.create(
+            title='Заголовок группы',
+            slug='test_slug'
+        )
         cls.user = User.objects.create_user(username='test_user')
         cls.post = Post.objects.create(
-            id=1,
             author=cls.user,
             text='Тестовая запись',
-            group=Group.objects.create(
-                title='Заголовок группы',
-                slug='test_slug')),
+            group=cls.group,
+        )
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-
-    # Проверяет шаблоны для каждого пути
-    def test_URLS_templates_all(self):
-        """Проверяет сообветствие url и шаблона"""
-        templates_pages_names = {
-            reverse('posts:index'): 'posts/index.html',
-            reverse('posts:post_create'): 'posts/create_post.html',
-            reverse('posts:group_list', kwargs={'slug': 'test_slug'}
-                    ): 'posts/group_list.html',
-            reverse('posts:profile', kwargs={'username': 'test_user'}
-                    ): 'posts/profile.html',
-            reverse('posts:post_detail', kwargs={'post_id': '1'}
-                    ): 'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': '1'}
-                    ): 'posts/create_post.html',
-        }
-        for reverse_name, template in templates_pages_names.items():
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
-                self.assertTemplateUsed(response, template)
 
     # проверяет контекст на главной странице
     def test_context_index(self):
@@ -53,8 +33,7 @@ class PostTests(TestCase):
         post_text_0 = first_object.text
         post_author_0 = first_object.author.username
         post_group_0 = first_object.group.title
-        self.assertEqual(post_text_0,
-                         'Тестовая запись')
+        self.assertEqual(post_text_0, 'Тестовая запись')
         self.assertEqual(post_author_0, 'test_user')
         self.assertEqual(post_group_0, 'Заголовок группы')
 
@@ -62,7 +41,7 @@ class PostTests(TestCase):
     def test_context_group_list(self):
         """Контекст в group_list"""
         response = self.authorized_client.get(
-            reverse('posts:group_list', kwargs={'slug': 'test_slug'}))
+            reverse('posts:group_list', args=(self.group.slug,)))
         first_object = response.context["group"]
         group_title_0 = first_object.title
         group_slug_0 = first_object.slug
@@ -73,7 +52,7 @@ class PostTests(TestCase):
     def test_context_profile(self):
         """Контекст в profile"""
         response = self.authorized_client.get(
-            reverse('posts:profile', kwargs={'username': 'test_user'}))
+            reverse('posts:profile', args=(self.user.username,)))
         first_object = response.context.get('page_obj')[0]
         post_text_0 = first_object.text
         self.assertEqual(response.context.get('author').username, 'test_user')

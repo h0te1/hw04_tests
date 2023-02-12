@@ -2,20 +2,10 @@
 <html lang="ru"> 
   <head>  
     <!-- Подключены иконки, стили и заполенены мета теги -->
-    <title>Профайл пользователя {{ author.get_full_name }}</title>
-  </head>
-  <body>       
-    <header>
-      <nav class="navbar navbar-light" style="background-color: lightskyblue">
-        <div class="container">
-          <a class="navbar-brand" href="/">
-            <img src="/static/img/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
-            <span style="color:red">Ya</span>tube
-          </a>
-        </div>
-      </nav>      
-    </header>
-    <main>
+    {% block title %}
+      Профайл пользователя {{ author.get_full_name }}
+    {% endblock %}
+    {% block content %}
       <div class="container py-5">        
         <h1>Все посты пользователя {{ author.get_full_name }} </h1>
         <h3>Всего постов: {{ count }} </h3>   
@@ -31,7 +21,7 @@
             </li>
           </ul>
           <p>
-            {{ post.text }} 
+            {{ post.text|linebreaks }} 
           </p>
           <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>
         </article>       
@@ -42,9 +32,4 @@
         {% endfor %}
         {% include 'includes/paginator.html' %}  
       </div>
-    </main>
-    <footer class="border-top text-center py-3">
-      <p>© {{ year }} Copyright <span style="color:red">Ya</span>tube</p>    
-    </footer>
-  </body>
-</html>
+    {% endblock %}

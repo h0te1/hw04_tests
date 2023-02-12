@@ -10,3 +10,7 @@ class PostForm(forms.ModelForm):
             'text': ('введите текст'),
             'group': ('Выберите группу для этого поста')
         }
+        lables = {
+            'text': ('текст'),
+            'group': ('Группа')
+        }

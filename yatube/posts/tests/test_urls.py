@@ -1,8 +1,7 @@
 from django.test import TestCase, Client
-from django.contrib.auth import get_user_model
-from ..models import Group, Post
+from django.urls import reverse
 
-User = get_user_model()
+from ..models import Group, Post, User
 
 
 class PostURLTests(TestCase):
@@ -21,36 +20,30 @@ class PostURLTests(TestCase):
         )
 
     def setUp(self):
-        # Создаем неавторизованный клиент
-        self.guest_client = Client()
-        # Создаем второй клиент
         self.authorized_client = Client()
         # Авторизуем пользователя
         self.authorized_client.force_login(self.user)
 
     def pages_response_template(self):
         template_response_code = {
-            '/': 'posts/index.html',
-            '/group/<slug:slug>/': 'posts/group_list.html',
-            '/profile/<str:username>/': 'posts/profile.html',
-            '/posts/<int:post_id>/': 'posts/post_detail.html',
+            reverse('/'): 'posts/index.html',
+            reverse('/group/<slug:slug>/'): 'posts/group_list.html',
+            reverse('/profile/<str:username>/'): 'posts/profile.html',
+            reverse('/posts/<int:post_id>/'): 'posts/post_detail.html',
+            reverse('/posts/<post_id>/edit/'): 'posts/create_post.html',
+            reverse('/create/'): 'posts/create_post.html',
         }
-        for template, address in template_response_code.items():
+        for address, template in template_response_code.items():
             with self.subTest(template=template):
-                response = self.guest_client.get(template)
+                response = self.authorized_client.get(template)
                 self.assertTemplateUsed(response, address)
-
-    def test_create_response_template(self):
-        """Страница /create/ использует шаблон posts/create_post.html"""
-        response = self.authorized_client.get('/create/')
-        self.assertTemplateUsed(response, 'posts/create_post.html')
 
     def test_create_url_redirect_anonymous(self):
         """Страница /create/ перенаправляет анонимного пользователя."""
-        response = self.guest_client.get('/create/')
+        response = self.client.get('/create/')
         self.assertEqual(response.status_code, 302)
 
     def test_unexisting_page_404(self):
         """Страница /unexisting_page/ возвращает 404."""
-        response = self.guest_client.get('/unexisting_page/')
+        response = self.client.get('/unexisting_page/')
         self.assertEqual(response.status_code, 404)
