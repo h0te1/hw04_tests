@@ -8,7 +8,7 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='auth')
+        cls.user = User.objects.create_user(username='user')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test_slug',
@@ -24,19 +24,34 @@ class PostURLTests(TestCase):
         # Авторизуем пользователя
         self.authorized_client.force_login(self.user)
 
-    def pages_response_template(self):
-        template_response_code = {
-            reverse('/'): 'posts/index.html',
-            reverse('/group/<slug:slug>/'): 'posts/group_list.html',
-            reverse('/profile/<str:username>/'): 'posts/profile.html',
-            reverse('/posts/<int:post_id>/'): 'posts/post_detail.html',
-            reverse('/posts/<post_id>/edit/'): 'posts/create_post.html',
-            reverse('/create/'): 'posts/create_post.html',
-        }
-        for address, template in template_response_code.items():
-            with self.subTest(template=template):
-                response = self.authorized_client.get(template)
-                self.assertTemplateUsed(response, address)
+    def test_pages_response_template(self):
+        template_response_code = (
+            ('posts:index', None, 'posts/index.html'),
+            ('posts:group_list', (self.group.id,), 'posts/group_list.html'),
+            ('posts:profile', (self.user.username,), 'posts/profile.html'),
+            ('posts:post_detail', (self.post.id,), 'posts/post_detail.html'),
+            ('posts:post_edit', (self.post.id,), 'posts/create_post.html'),
+            ('posts:post_create', None, 'posts/create_post.html'),
+        )
+        for name, args, template in template_response_code:
+            with self.subTest(name=name):
+                response = self.authorized_client.get(reverse(name, args=args))
+                self.assertTemplateUsed(response, template)
+
+    def test_url_to_template(self):
+        revers_args_template = (
+            ('posts:index', None, '/'),
+            ('posts:group_list', (self.group.id,), '/group/<slug:slug>/'),
+            ('posts:profile', (self.user.username,),
+             '/profile/<str:username>/'),
+            ('posts:post_detail', (self.post.id,), '/posts/<post_id>/'),
+            ('posts:post_edit', (self.post.id,), '/posts/<post_id>/edit/'),
+            ('posts:post_create', None, '/create/'),
+        )
+        for name, args, url in revers_args_template:
+            with self.subTest(name=name):
+                response = self.authorized_client.get(reverse(name, args=args))
+                pass
 
     def test_create_url_redirect_anonymous(self):
         """Страница /create/ перенаправляет анонимного пользователя."""

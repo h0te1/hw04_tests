@@ -1,7 +1,7 @@
 from django.test import Client, TestCase
 from django.urls import reverse
-from django import forms
 
+from django import forms
 from posts.models import Post, Group, User
 
 
@@ -9,7 +9,6 @@ class PostTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Создаю группу, текст и автора уже внутри поста
         cls.group = Group.objects.create(
             title='Заголовок группы',
             slug='test_slug'
@@ -65,7 +64,6 @@ class PostTests(TestCase):
             reverse('posts:post_detail', kwargs={'post_id': '1'})
         ))
         page_obj = response.context.get('post')
-        print(response.context)
         # текст на странице сравниваем с текстом образца
         text = page_obj.text
         obrazec = Post.objects.get(id=1)
