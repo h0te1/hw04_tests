@@ -17,17 +17,18 @@ class PostURLTests(TestCase):
         cls.post = Post.objects.create(
             author=cls.user,
             text='Тестовый пост',
+            group=cls.group
         )
 
     def setUp(self):
         self.authorized_client = Client()
-        # Авторизуем пользователя
         self.authorized_client.force_login(self.user)
 
     def test_pages_response_template(self):
+        """Тест на соответствие reverse и template"""
         template_response_code = (
             ('posts:index', None, 'posts/index.html'),
-            ('posts:group_list', (self.group.id,), 'posts/group_list.html'),
+            ('posts:group_list', (self.group.slug,), 'posts/group_list.html'),
             ('posts:profile', (self.user.username,), 'posts/profile.html'),
             ('posts:post_detail', (self.post.id,), 'posts/post_detail.html'),
             ('posts:post_edit', (self.post.id,), 'posts/create_post.html'),
@@ -39,24 +40,74 @@ class PostURLTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_url_to_template(self):
+        """Тест на соответствие reverse и url"""
         revers_args_template = (
             ('posts:index', None, '/'),
-            ('posts:group_list', (self.group.id,), '/group/<slug:slug>/'),
+            ('posts:group_list', (self.group.slug,),
+             f'/group/{self.group.slug}/'),
             ('posts:profile', (self.user.username,),
-             '/profile/<str:username>/'),
-            ('posts:post_detail', (self.post.id,), '/posts/<post_id>/'),
-            ('posts:post_edit', (self.post.id,), '/posts/<post_id>/edit/'),
+             f'/profile/{self.user.username}/'),
+            ('posts:post_detail', (self.post.id,), f'/posts/{self.post.id}/'),
+            ('posts:post_edit', (self.post.id,),
+             f'/posts/{self.post.id}/edit/'),
             ('posts:post_create', None, '/create/'),
         )
         for name, args, url in revers_args_template:
             with self.subTest(name=name):
-                response = self.authorized_client.get(reverse(name, args=args))
-                pass
+                self.assertEqual(reverse(name, args=args), url)
 
-    def test_create_url_redirect_anonymous(self):
-        """Страница /create/ перенаправляет анонимного пользователя."""
-        response = self.client.get('/create/')
-        self.assertEqual(response.status_code, 302)
+    def test_urls_to_author(self):
+        """Проверяем, что все url доступны автору"""
+        revers_args_template = (
+            ('posts:index', None),
+            ('posts:group_list', (self.group.slug,)),
+            ('posts:profile', (self.user.username,)),
+            ('posts:post_detail', (self.post.id,)),
+            ('posts:post_edit', (self.post.id,)),
+            ('posts:post_create', None),
+        )
+        for name, args in revers_args_template:
+            with self.subTest(name=name):
+                response = self.authorized_client.get(reverse(name, args=args))
+                self.assertEqual(response.status_code, 200)
+
+    def test_urls_to_logined_user(self):
+        """Проверяем, что все url доступны не автору"""
+        not_author = User.objects.create(username='not_author')
+        self.authorized_client.force_login(not_author)
+        revers_args_template = (
+            ('posts:index', None),
+            ('posts:group_list', (self.group.slug,)),
+            ('posts:profile', (self.user.username,)),
+            ('posts:post_detail', (self.post.id,)),
+            ('posts:post_edit', (self.post.id,)),
+            ('posts:post_create', None),
+        )
+        for name, args in revers_args_template:
+            with self.subTest(name=name):
+                response = self.authorized_client.get(reverse(name, args=args))
+                if name == 'posts:post_edit':
+                    self.assertEqual(response.status_code, 302)
+                else:
+                    self.assertEqual(response.status_code, 200)
+
+    def test_urls_to_guest_client(self):
+        """все url доступны незарегестрированному пользователю"""
+        revers_args_template = (
+            ('posts:index', None),
+            ('posts:group_list', (self.group.slug,)),
+            ('posts:profile', (self.user.username,)),
+            ('posts:post_detail', (self.post.id,)),
+            ('posts:post_edit', (self.post.id,)),
+            ('posts:post_create', None),
+        )
+        for name, args in revers_args_template:
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name, args=args))
+                if name == 'posts:post_edit' or name == 'posts:post_create':
+                    self.assertEqual(response.status_code, 302)
+                else:
+                    self.assertEqual(response.status_code, 200)
 
     def test_unexisting_page_404(self):
         """Страница /unexisting_page/ возвращает 404."""
