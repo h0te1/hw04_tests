@@ -34,7 +34,6 @@ def profile(request, username):
     page_obj = paginator(request, postes, 10)
     context = {
         'count': count,
-        'posts': postes,
         'author': author,
         'page_obj': page_obj,
 
@@ -45,11 +44,9 @@ def profile(request, username):
 def post_detail(request, post_id):
     post = Post.objects.get(id=post_id)
     count = Post.objects.filter(author=post.author).count()
-    tree_digits = post.text[0:30]
     context = {
         'post': post,
         'count': count,
-        'digi': tree_digits,
     }
     return render(request, 'posts/post_detail.html', context)
 

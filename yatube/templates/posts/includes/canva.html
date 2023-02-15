@@ -1,0 +1,26 @@
+<!--Canva переводится как хоЛст, а не хост, поэтому название я оставлю-->
+<!DOCTYPE html>
+<ul>
+  {% if request != 'posts:profile'%}
+    <li class="nav-item">
+      <a href="{% url 'posts:profile' post.author.username %}">
+        Автор: {{ post.author.get_full_name }}
+      </a>
+    </li>
+  {% endif%}
+  <li>
+      Дата публикации: {{ post.pub_date|date:"d E Y" }}
+  </li>
+  {% if request != post.group %}
+    <li>
+      <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+    </li>
+  {% endif %}
+</ul>
+<p class="nav-item">
+  {{ post.text|linebreaks }}
+  <br>
+  <a href="{% url 'posts:post_detail' post.id %}">
+  детали
+  </a>
+</p>

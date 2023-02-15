@@ -1,14 +1,16 @@
 {% extends 'base.html' %}
-      {% block title %}
-        Последние обновления на сайте
-      {% endblock %}
-      {% block content %}
-        {% for post in page_obj %}
-          {% include 'includes/canva.html'%}    
-          {% if post.group %}
-            <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
-          {% endif %}
-          {% if not forloop.last %}<hr>{% endif %}
-        {% endfor %}
-        {% include 'includes/paginator.html' %}
-      {% endblock %}
+{% block title %}
+  Последние обновления на сайте
+{% endblock %}
+{% block content %}
+  {% for post in page_obj %}
+    {% include 'posts/includes/canva.html'%}    
+    {% if post.group %} <!--Всё, что в цикле for выше - и есть карточка поста-->
+      <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+    {% endif %}
+    {% if not forloop.last %}<hr>{% endif %}
+  {% endfor %}
+  {% include 'posts/includes/paginator.html' %}
+{% endblock %}
+<!--Говоря о структуре отступов, вы сами попросили удалить все теги из файла в прошлой версии ревью-->
+<!--Я не представляю, какие теги тут нужны, да и все, что нужны были есть в base.html-->

@@ -1,10 +1,6 @@
 {% extends 'base.html' %}
       {% block title %}
-        {% if not is_edit %}
-          Добавить запись
-        {% else %}
-          Редактировать запись
-        {% endif %}
+        {% if form.instance.id %} Редактировать запись {% else %} Добавить запись {% endif %}
       {% endblock %}
       {% block content %}
       <div class="container py-5">
@@ -12,50 +8,22 @@
           <div class="col-md-8 p-5">
             <div class="card">
               <div class="card-header"> 
-                {% if form.instance.id %}
-                  редактировать пост
-                {% else %}      
-                  Новый пост
-                {% endif %}          
+                {% if form.instance.id %} редактировать пост {% else %} Новый пост {% endif %}
               </div>
               <div class="card-body">  
-                {% load user_filters %} {# Загружаем фильтры #}
+                {% load user_filters %}
                   {% include 'includes/errors.html'%}
-                  {% if not is_edit %}
+                  {% if not form.instance.id %}
                     <form method="post" action="{% url 'posts:post_create' %}">
                     {% csrf_token %}
                   {% else %}
                       <form method="post" action="{% url 'posts:post_edit' post_id %}">
                     {% csrf_token %}
                   {% endif %}
-                  {# Выводим поля в цикле, по отдельности #}
-                  {% for field in form %}
-                  <div class="form-group row my-3">
-                    <label for="{{ field.id_for_label }}">
-                      {{ field.label }}
-                        {% if field.field.required %}
-                          <span class="required text-danger">*</span>
-                        {% endif %}                  
-                    </label>
-                    {# К полю ввода добавляем атрибут class #}
-                    {{ field|addclass:'form-control' }}
-                      {% if field.help_text %}
-                        <small 
-                            id="{{ field.id_for_label }}-help"
-                            class="form-text text-muted"
-                        >
-                          {{ field.help_text|safe }}
-                        </small>
-                      {% endif %}
-                  {% endfor %}
-                  </div>
+                  {%include 'includes\fields.html'%}
                   <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
-                      {% if is_edit %}
-                        Сохранить
-                      {% else %}
-                        Добавить
-                      {% endif %}
+                      {% if form.instance.id %} Сохранить {% else %} Добавить {% endif %}
                     </button>
                   </div>
                 </form>
