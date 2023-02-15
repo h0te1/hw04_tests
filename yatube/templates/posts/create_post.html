@@ -20,7 +20,7 @@
                       <form method="post" action="{% url 'posts:post_edit' post_id %}">
                     {% csrf_token %}
                   {% endif %}
-                  {%include 'includes\fields.html'%}
+                  {%include 'includes/fields.html'%}
                   <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
                       {% if form.instance.id %} Сохранить {% else %} Добавить {% endif %}
