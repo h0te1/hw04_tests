@@ -4,10 +4,7 @@
 {% endblock %}
 {% block content %}
   {% for post in page_obj %}
-    {% include 'posts/includes/canva.html'%}    
-    {% if post.group %} <!--Всё, что в цикле for выше - и есть карточка поста-->
-      <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
-    {% endif %}
+    {% include 'posts/includes/card_of_post.html'%}    
     {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}
   {% include 'posts/includes/paginator.html' %}

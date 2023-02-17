@@ -18,8 +18,6 @@ class Group(models.Model):
     )
 
     class Meta:
-        ordering = ['title']
-        default_related_name = 'group'
         verbose_name = 'Группа'
 
     def __str__(self):
@@ -53,7 +51,7 @@ class Post(models.Model):
     )
 
     class Meta:
-        ordering = ['-pub_date']  # Если исправить [] на (), то
+        ordering = ('-pub_date',)  # Если исправить [] на (), то
         default_related_name = 'posts'  # Появится 9 ошибок в пайтесте
         verbose_name = 'пост'
 

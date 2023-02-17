@@ -23,6 +23,14 @@ class PostURLTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.revers_and_args = (
+            ('posts:index', None),
+            ('posts:group_list', (self.group.slug,)),
+            ('posts:profile', (self.user.username,)),
+            ('posts:post_detail', (self.post.id,)),
+            ('posts:post_edit', (self.post.id,)),
+            ('posts:post_create', None),
+        )
 
     def test_pages_response_template(self):
         """Тест на соответствие reverse и template"""
@@ -58,15 +66,7 @@ class PostURLTests(TestCase):
 
     def test_urls_to_author(self):
         """Проверяем, что все url доступны автору"""
-        revers_args_template = (
-            ('posts:index', None),
-            ('posts:group_list', (self.group.slug,)),
-            ('posts:profile', (self.user.username,)),
-            ('posts:post_detail', (self.post.id,)),
-            ('posts:post_edit', (self.post.id,)),
-            ('posts:post_create', None),
-        )
-        for name, args in revers_args_template:
+        for name, args in self.revers_and_args:
             with self.subTest(name=name):
                 response = self.authorized_client.get(reverse(name, args=args))
                 self.assertEqual(response.status_code, 200)
@@ -75,15 +75,7 @@ class PostURLTests(TestCase):
         """Проверяем, что все url доступны не автору"""
         not_author = User.objects.create(username='not_author')
         self.authorized_client.force_login(not_author)
-        revers_args_template = (
-            ('posts:index', None),
-            ('posts:group_list', (self.group.slug,)),
-            ('posts:profile', (self.user.username,)),
-            ('posts:post_detail', (self.post.id,)),
-            ('posts:post_edit', (self.post.id,)),
-            ('posts:post_create', None),
-        )
-        for name, args in revers_args_template:
+        for name, args in self.revers_and_args:
             with self.subTest(name=name):
                 response = self.authorized_client.get(reverse(name, args=args))
                 if name == 'posts:post_edit':
@@ -93,18 +85,14 @@ class PostURLTests(TestCase):
 
     def test_urls_to_guest_client(self):
         """все url доступны незарегестрированному пользователю"""
-        revers_args_template = (
-            ('posts:index', None),
-            ('posts:group_list', (self.group.slug,)),
-            ('posts:profile', (self.user.username,)),
-            ('posts:post_detail', (self.post.id,)),
-            ('posts:post_edit', (self.post.id,)),
-            ('posts:post_create', None),
-        )
-        for name, args in revers_args_template:
+        redirect_list = [
+            'posts:post_edit',
+            'posts:post_create'
+        ]
+        for name, args in self.revers_and_args:
             with self.subTest(name=name):
                 response = self.client.get(reverse(name, args=args))
-                if name == 'posts:post_edit' or name == 'posts:post_create':
+                if name == redirect_list[0] or name == redirect_list[1]:
                     self.assertEqual(response.status_code, 302)
                 else:
                     self.assertEqual(response.status_code, 200)

@@ -13,6 +13,11 @@ class PostCreateFormTests(TestCase):
             slug='test_slug',
             description='Тестовое описание'
         )
+        cls.group_2 = Group.objects.create(
+            title=('Заголовок для 2 тестовой группы'),
+            slug='test_slug_2',
+            description='Тестовое описание 2'
+        )
         cls.user = User.objects.create_user(username='Nikita')
         cls.post = Post.objects.create(
             author=cls.user,
@@ -67,18 +72,23 @@ class PostCreateFormTests(TestCase):
         count_posts_1 = Post.objects.count()
         form_data = {
             'text': 'Измененный текст',
-            'group': self.group.id,  # Как видите, я использую только одну
-        }                            # Группу в этом файле, поэтому для теста
-        post_2 = self.authorized_client.post(  # я её не меняю
+            'group': self.group_2.id,
+        }
+        post_2 = self.authorized_client.post(
             reverse('posts:post_edit', args=(self.post.id,)),
             data=form_data,
             follow=True,
         )
         edited = Post.objects.first()
+        response = self.client.get(reverse(
+            'posts:group_list', args=(self.group.slug,)))
         count_posts_2 = Post.objects.count()
         # HTTPStatus - доп. задание, оно не должно проверяться
         self.assertEqual(post_2.status_code, 200)
-        self.assertEqual(edited.text, 'Измененный текст')
-        self.assertEqual(edited.author, self.user)
+        self.assertEqual(edited.text, form_data['text'])
+        self.assertEqual(edited.author, self.post.author)
         self.assertEqual(edited.id, self.post.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            len(response.context.get('page_obj').object_list), 0)
         self.assertEqual(count_posts_1, count_posts_2)

@@ -4,13 +4,9 @@ from django import forms
 
 from posts.models import Post, Group, User
 from posts.forms import PostForm
+from yatube.settings import PAGE_LIMIT
 
-
-def context_help(otvet, post=False):
-    if post is False:
-        return otvet.context.get('page_obj')[0]
-    else:
-        return otvet.context.get('post')
+NUMBER_OF_POSTS = 13
 
 
 class PostTests(TestCase):
@@ -28,6 +24,21 @@ class PostTests(TestCase):
             group=cls.group,
         )
 
+    def context_help(self, otvet, page_object=True):
+        if page_object is True:
+            post = otvet.context.get('page_obj')[0]
+            post_text_0 = post.text
+            post_author_0 = post.author.username
+            post_group_0 = post.group.title
+            self.assertEqual(post_text_0, 'Тестовая запись')
+            self.assertEqual(post_author_0, 'test_user')
+            self.assertEqual(post_group_0, 'Заголовок группы')
+        else:
+            post = otvet.context.get('post')
+            text = post.text
+            obrazec = Post.objects.get(id=1)
+            self.assertEqual(text, obrazec.text)
+
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
@@ -36,26 +47,14 @@ class PostTests(TestCase):
     def test_context_index(self):
         """Контекст в index"""
         response = self.authorized_client.get(reverse('posts:index'))
-        first_object = context_help(otvet=response)
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author.username
-        post_group_0 = first_object.group.title
-        self.assertEqual(post_text_0, 'Тестовая запись')
-        self.assertEqual(post_author_0, 'test_user')
-        self.assertEqual(post_group_0, 'Заголовок группы')
+        self.context_help(otvet=response)
 
     # Проверяет контекст на странице групп
     def test_context_group_list(self):
         """Контекст в group_list"""
         response = self.authorized_client.get(
             reverse('posts:group_list', args=(self.group.slug,)))
-        first_object = context_help(otvet=response)
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author.username
-        post_group_0 = first_object.group.title
-        self.assertEqual(post_text_0, 'Тестовая запись')
-        self.assertEqual(post_author_0, 'test_user')
-        self.assertEqual(post_group_0, 'Заголовок группы')
+        self.context_help(otvet=response)
         self.assertEqual(response.context.get('group').title,
                          'Заголовок группы')
         self.assertEqual(response.context.get('group').slug, 'test_slug')
@@ -66,10 +65,8 @@ class PostTests(TestCase):
         response = self.authorized_client.get(
             reverse('posts:profile', args=(self.user.username,)))
 
-        first_object = context_help(otvet=response)
-        post_text_0 = first_object.text
+        self.context_help(otvet=response)
         self.assertEqual(response.context.get('author').username, 'test_user')
-        self.assertEqual(post_text_0, 'Тестовая запись')
 
     # Проверяет содержимое страницы с деталями поста
     def test_post_detail(self):
@@ -77,10 +74,7 @@ class PostTests(TestCase):
         response = self.authorized_client.get((
             reverse('posts:post_detail', args=(self.post.id,))
         ))
-        page_obj = context_help(otvet=response, post=True)
-        text = page_obj.text
-        obrazec = Post.objects.get(id=1)
-        self.assertEqual(text, obrazec.text)
+        self.context_help(otvet=response, page_object=False)
 
     # правильность типов полей формы для редактирования и создания поста
     def test_post_edit_context(self):
@@ -122,8 +116,7 @@ class PostTests(TestCase):
         self.assertTrue(post.group)
         response = self.authorized_client.get(
             reverse('posts:group_list', args=('test_slug',)))
-        group_post = context_help(otvet=response)
-        self.assertEqual(post, group_post)
+        self.context_help(otvet=response)
 
 
 class PaginatorViewsTest(TestCase):
@@ -137,7 +130,7 @@ class PaginatorViewsTest(TestCase):
             slug='test_slug',
             description='Тестовое описание')
         cls.posts = []
-        for number in range(13):
+        for number in range(NUMBER_OF_POSTS):
             cls.posts.append(Post(
                 text=f'Тестовый пост {number}',
                 author=cls.author,
@@ -154,13 +147,13 @@ class PaginatorViewsTest(TestCase):
     def test_paginator(self):
         """Проверка обеих страниц паджинатора"""
         list_urls = (
-            ("posts:index", None,),
-            ("posts:group_list", ("test_slug",)),
-            ("posts:profile", ("user",)),
+            ('posts:index', None,),
+            ('posts:group_list', (self.group.slug,)),
+            ('posts:profile', (self.author.username,)),
         )
         pages = (
-            ('?page=1', 10),
-            ('?page=2', 3)
+            ('?page=1', PAGE_LIMIT),
+            ('?page=2', NUMBER_OF_POSTS - PAGE_LIMIT)
         )
         for name, args in list_urls:
             with self.subTest(url=name):

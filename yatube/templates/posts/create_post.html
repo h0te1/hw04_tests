@@ -17,7 +17,7 @@
                     <form method="post" action="{% url 'posts:post_create' %}">
                     {% csrf_token %}
                   {% else %}
-                      <form method="post" action="{% url 'posts:post_edit' post_id %}">
+                      <form method="post" action="{% url 'posts:post_edit' form.instance.id %}">
                     {% csrf_token %}
                   {% endif %}
                   {%include 'includes/fields.html'%}

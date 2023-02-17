@@ -8,8 +8,13 @@ from .models import Post, Group, User
 
 
 def index(request):
-    post_list = Post.objects.all()
-    page_obj = paginator(request, post_list, 10)
+    # select_related получает связанные объекты в том же запросе к базе данных
+    # Сверху была цитата с сайта, на который вы кинули ссылку.
+    # В этой функции у меня нет никаких связанных данных
+    # Мне нужны все посты, но никаких других данных доставать не нужно
+    post_list = Post.objects.select_related(
+        'group', 'author').all()
+    page_obj = paginator(request, post_list)
     context = {
         'page_obj': page_obj,
     }
@@ -18,8 +23,9 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    post_list = group.posts.all()
-    page_obj = paginator(request, post_list, 10)
+    post_list = group.posts.select_related(
+        'group', 'author').all()
+    page_obj = paginator(request, post_list)
     context = {
         'group': group,
         'page_obj': page_obj,
@@ -28,10 +34,10 @@ def group_posts(request, slug):
 
 
 def profile(request, username):
-    author = User.objects.get(username=username)
-    postes = author.posts.all()
+    author = get_object_or_404(User, username=username)
+    postes = author.posts.select_related('group').all()
     count = postes.count()
-    page_obj = paginator(request, postes, 10)
+    page_obj = paginator(request, postes)
     context = {
         'count': count,
         'author': author,
@@ -42,11 +48,9 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post = Post.objects.get(id=post_id)
-    count = Post.objects.filter(author=post.author).count()
+    post = get_object_or_404(Post, id=post_id)
     context = {
         'post': post,
-        'count': count,
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -76,7 +80,6 @@ def post_edit(request, post_id):
         return redirect('posts:post_detail', post_id)
     context = {
         'form': form,
-        'is_edit': True,
         'post_id': post_id
     }
     return render(request, 'posts/create_post.html', context)

@@ -4,16 +4,14 @@
 {% endblock %}
 {% block content%}
   <div class="container">
-    <article>
-      <h1>{{ group }}</h1>
-      <p>
-        {{ group.description|linebreaks }}
-      </p>
-      {% for post in page_obj %}
-      {% include 'posts/includes/canva.html'%}    
-        {% if not forloop.last %}<hr>{% endif %}
-      {% endfor %}
-      {% include 'posts/includes/paginator.html' %}
-    </article>
+    <h1>{{ group }}</h1>
+    <p>
+      {{ group.description|linebreaks }}
+    </p>
+    {% for post in page_obj %}
+      {% include 'posts/includes/card_of_post.html'%}
+      {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
   </div>
 {% endblock %}
