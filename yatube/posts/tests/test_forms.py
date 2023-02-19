@@ -83,11 +83,11 @@ class PostCreateFormTests(TestCase):
         response = self.client.get(reverse(
             'posts:group_list', args=(self.group.slug,)))
         count_posts_2 = Post.objects.count()
-        # HTTPStatus - доп. задание, оно не должно проверяться
         self.assertEqual(post_2.status_code, 200)
         self.assertEqual(edited.text, form_data['text'])
         self.assertEqual(edited.author, self.post.author)
         self.assertEqual(edited.id, self.post.id)
+        self.assertEqual(edited.group, self.group_2)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             len(response.context.get('page_obj').object_list), 0)

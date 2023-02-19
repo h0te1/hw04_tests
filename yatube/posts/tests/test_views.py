@@ -26,18 +26,16 @@ class PostTests(TestCase):
 
     def context_help(self, otvet, page_object=True):
         if page_object is True:
-            post = otvet.context.get('page_obj')[0]
-            post_text_0 = post.text
-            post_author_0 = post.author.username
-            post_group_0 = post.group.title
-            self.assertEqual(post_text_0, 'Тестовая запись')
-            self.assertEqual(post_author_0, 'test_user')
-            self.assertEqual(post_group_0, 'Заголовок группы')
+            context_in = otvet.context.get('page_obj')[0]
         else:
-            post = otvet.context.get('post')
-            text = post.text
-            obrazec = Post.objects.get(id=1)
-            self.assertEqual(text, obrazec.text)
+            context_in = otvet.context.get('post')
+
+        post_text_0 = context_in.text
+        post_author_0 = context_in.author.username
+        post_group_0 = context_in.group.title
+        self.assertEqual(post_text_0, self.post.text)
+        self.assertEqual(post_author_0, self.user.username)
+        self.assertEqual(post_group_0, self.group.title)
 
     def setUp(self):
         self.authorized_client = Client()
@@ -55,8 +53,7 @@ class PostTests(TestCase):
         response = self.authorized_client.get(
             reverse('posts:group_list', args=(self.group.slug,)))
         self.context_help(otvet=response)
-        self.assertEqual(response.context.get('group').title,
-                         'Заголовок группы')
+        self.assertEqual(response.context.get('group'), self.group)
         self.assertEqual(response.context.get('group').slug, 'test_slug')
 
     # Проверяет контекст на странице профиля
@@ -66,7 +63,7 @@ class PostTests(TestCase):
             reverse('posts:profile', args=(self.user.username,)))
 
         self.context_help(otvet=response)
-        self.assertEqual(response.context.get('author').username, 'test_user')
+        self.assertEqual(response.context.get('author'), self.user)
 
     # Проверяет содержимое страницы с деталями поста
     def test_post_detail(self):

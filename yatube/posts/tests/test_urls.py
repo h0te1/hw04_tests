@@ -92,7 +92,7 @@ class PostURLTests(TestCase):
         for name, args in self.revers_and_args:
             with self.subTest(name=name):
                 response = self.client.get(reverse(name, args=args))
-                if name == redirect_list[0] or name == redirect_list[1]:
+                if name in redirect_list:
                     self.assertEqual(response.status_code, 302)
                 else:
                     self.assertEqual(response.status_code, 200)
