@@ -147,3 +147,6 @@ dmypy.json
 
 # static
 /yatube/static
+
+# media
+/yatube/media

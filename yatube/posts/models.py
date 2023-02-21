@@ -49,11 +49,17 @@ class Post(models.Model):
         verbose_name='Группа',
         help_text='Группа, к которой будет относиться пост'
     )
+    image = models.ImageField(
+        verbose_name='Картинка',
+        upload_to='posts/',
+        blank=True
+    )
 
     class Meta:
-        ordering = ('-pub_date',)  # Если исправить [] на (), то
-        default_related_name = 'posts'  # Появится 9 ошибок в пайтесте
+        ordering = ('-pub_date',)
+        default_related_name = 'posts'
         verbose_name = 'пост'
+        verbose_name_plural = 'Посты'
 
     def __str__(self):
         return f'{self.text[:15]}'

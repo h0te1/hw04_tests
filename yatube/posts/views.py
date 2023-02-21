@@ -8,10 +8,6 @@ from .models import Post, Group, User
 
 
 def index(request):
-    # select_related получает связанные объекты в том же запросе к базе данных
-    # Сверху была цитата с сайта, на который вы кинули ссылку.
-    # В этой функции у меня нет никаких связанных данных
-    # Мне нужны все посты, но никаких других данных доставать не нужно
     post_list = Post.objects.select_related(
         'group', 'author').all()
     page_obj = paginator(request, post_list)
@@ -74,7 +70,11 @@ def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author != request.user:
         return redirect('posts:post_detail', post_id=post_id)
-    form = PostForm(request.POST or None, instance=post)
+    form = PostForm(
+        request.POST or None,
+        files=request.FILES or None,
+        instance=post,
+    )
     if form.is_valid():
         form.save()
         return redirect('posts:post_detail', post_id)

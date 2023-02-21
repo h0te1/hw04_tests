@@ -14,10 +14,10 @@
                 {% load user_filters %}
                   {% include 'includes/errors.html'%}
                   {% if not form.instance.id %}
-                    <form method="post" action="{% url 'posts:post_create' %}">
+                    <form method="post" action="{% url 'posts:post_create' %}" enctype="multipart/form-data">
                     {% csrf_token %}
                   {% else %}
-                      <form method="post" action="{% url 'posts:post_edit' form.instance.id %}">
+                      <form method="post" action="{% url 'posts:post_edit' form.instance.id %}" enctype="multipart/form-data">
                     {% csrf_token %}
                   {% endif %}
                   {%include 'includes/fields.html'%}
