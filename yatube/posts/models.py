@@ -56,7 +56,7 @@ class Post(CreatedModel):
     )
 
     class Meta:
-        ordering = ('-pub_date',)
+        ordering = ('-created',)
         default_related_name = 'posts'
         verbose_name = 'пост'
         verbose_name_plural = 'Посты'
@@ -83,4 +83,15 @@ class Comment(CreatedModel):
         help_text='Введите текст',
         blank=False,
         null=True,
+    )
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name="follower",
+    )
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name="following",
     )
