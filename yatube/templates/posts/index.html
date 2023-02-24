@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load cache %}
+{% cache 20 index_page %}
 {% block title %}
   Последние обновления на сайте
 {% endblock %}
@@ -9,5 +11,4 @@
   {% endfor %}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}
-<!--Говоря о структуре отступов, вы сами попросили удалить все теги из файла в прошлой версии ревью-->
-<!--Я не представляю, какие теги тут нужны, да и все, что нужны были есть в base.html-->
+{% endcache %} 

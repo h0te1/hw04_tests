@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+from core.models import CreatedModel
+
 User = get_user_model()
 
 
@@ -8,6 +10,7 @@ class Group(models.Model):
     title = models.CharField(
         max_length=200,
         verbose_name='название',
+        help_text='Выберите группу для этого поста',
     )
     slug = models.SlugField(
         verbose_name='то, что будет в url',
@@ -24,16 +27,12 @@ class Group(models.Model):
         return f'{self.title}'
 
 
-class Post(models.Model):
+class Post(CreatedModel):
     text = models.TextField(
         verbose_name='Текст поста',
         help_text='Введите текст поста',
         blank=False,
         null=False,
-    )
-    pub_date = models.DateTimeField(
-        verbose_name='Дата публикации',
-        auto_now_add=True
     )
     author = models.ForeignKey(
         User,
@@ -52,7 +51,8 @@ class Post(models.Model):
     image = models.ImageField(
         verbose_name='Картинка',
         upload_to='posts/',
-        blank=True
+        blank=True,
+        help_text='вы можете вставить картинку'
     )
 
     class Meta:
@@ -65,7 +65,7 @@ class Post(models.Model):
         return f'{self.text[:15]}'
 
 
-class Comment(models.Model):
+class Comment(CreatedModel):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -82,9 +82,5 @@ class Comment(models.Model):
         verbose_name='комментарий',
         help_text='Введите текст',
         blank=False,
-        null=False,
-    )
-    created = models.DateTimeField(
-        verbose_name='Дата публикации',
-        auto_now_add=True
+        null=True,
     )

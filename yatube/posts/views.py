@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 
 from .utils import paginator
 from .forms import PostForm, CommentForm
-from .models import Post, Group, User
+from .models import Post, Group, Comment, User
 
 
 def index(request):
@@ -44,8 +44,8 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post = Post.objects.select_related('comments').get(id=post_id)
-    comments = post.comments
+    post = Post.objects.get(id=post_id)
+    comments = Comment.objects.get(post=post)
     form = CommentForm(request.POST or None)
     context = {
         'post': post,
@@ -62,7 +62,7 @@ def post_create(request):
         post = form.save(commit=False)
         post.author = request.user
         post.save()
-        return redirect('posts:profile', username=request.user)
+        return redirect('posts:profile', username=request.user.username)
     context = {
         'form': form
     }
