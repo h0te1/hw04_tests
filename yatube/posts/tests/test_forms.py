@@ -1,3 +1,7 @@
+import shutil
+import tempfile
+
+from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -8,6 +12,7 @@ class PostCreateFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.group = Group.objects.create(
             title=('Заголовок для тестовой группы'),
             slug='test_slug',
@@ -24,6 +29,11 @@ class PostCreateFormTests(TestCase):
             text='Тестовый пост',
             group=cls.group
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
 
     def setUp(self):
         self.authorized_client = Client()

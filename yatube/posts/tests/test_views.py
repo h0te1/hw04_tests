@@ -1,13 +1,14 @@
 import shutil
 import tempfile
 
-from django.test import Client, TestCase, override_settings
-from django.urls import reverse
 from django import forms
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 
-from posts.models import Post, Group, User
+from posts.models import Post, Group, Follow, User
 from posts.forms import PostForm
 from yatube.settings import PAGE_LIMIT
 
@@ -188,3 +189,97 @@ class PaginatorViewsTest(TestCase):
                     self.assertEqual(
                         len(response.context.get('page_obj').object_list
                             ), lenght)
+
+
+class CacheTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='test_name')
+        cls.post = Post.objects.create(
+            text='Тестовая запись для создания поста'
+        )
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_cache_index(self):
+        """Тест кэширования страницы index.html"""
+        first_state = self.authorized_client.get(reverse('posts:index'))
+        post_1 = Post.objects.get(id=self.post.id)
+        post_1.text = 'Измененный текст'
+        post_1.save()
+        second_state = self.authorized_client.get(reverse('posts:index'))
+        self.assertEqual(first_state.content, second_state.content)
+        cache.clear()
+        third_state = self.authorized_client.get(reverse('posts:index'))
+        self.assertNotEqual(first_state.content, third_state.content)
+
+
+class FollowTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_follower = User.objects.create_user(username='follower')
+        cls.user_following = User.objects.create_user(username='following')
+        cls.post = Post.objects.create(
+            author=cls.user_following,
+            text='Тестовая запись для тестирования ленты'
+        )
+
+    def setUp(self):
+        self.client_auth_follower = Client()
+        self.client_auth_following = Client()
+        self.client_auth_follower.force_login(self.user_follower)
+        self.client_auth_following.force_login(self.user_following)
+
+    def test_follow(self):
+        """Подписка"""
+        self.client_auth_follower.get(
+            reverse('profile_follow', args=(self.user_following.username,))
+        )
+        self.assertEqual(Follow.objects.all().count(), 1)
+
+    def test_unfollow(self):
+        """Отписка"""
+        self.client_auth_follower.get(
+            reverse('profile_follow', args=(self.user_following.username,))
+        )
+        self.client_auth_follower.get(
+            reverse('profile_unfollow', args=(self.user_following.username,))
+        )
+        self.assertEqual(Follow.objects.all().count(), 0)
+
+    def test_subscription_feed(self):
+        """запись появляется в ленте подписчиков"""
+        Follow.objects.create(
+            user=self.user_follower,
+            author=self.user_following,
+        )
+        response = self.client_auth_follower.get('/follow/')
+        post_text_0 = response.context['page_obj'][0].text
+        self.assertEqual(post_text_0, 'Тестовая запись для тестирования ленты')
+        # в качестве неподписанного пользователя проверяем собственную ленту
+        response = self.client_auth_following.get('/follow/')
+        self.assertNotContains(response,
+                               'Тестовая запись для тестирования ленты')
+
+    def test_add_comment(self):
+        self.client_auth_following.post(
+            f'/following/{self.post.id}/comment',
+            {'text': "тестовый комментарий"},
+            follow=True
+        )
+        response = self.client_auth_following.\
+            get(f'/following/{self.post.id}/')
+        self.assertContains(response, 'тестовый комментарий')
+        self.client_auth_following.logout()
+        self.client_auth_following.post(
+            f'/following/{self.post.id}/comment',
+            {'text': "комментарий от гостя"},
+            follow=True
+        )
+        response = self.client_auth_following.\
+            get(f'/following/{self.post.id}/')
+        self.assertNotContains(response, 'комментарий от гостя')

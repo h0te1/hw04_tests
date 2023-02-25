@@ -34,10 +34,17 @@ def profile(request, username):
     postes = author.posts.select_related('group').all()
     count = postes.count()
     page_obj = paginator(request, postes)
+    if request.user.is_authenticated:
+        following = Follow.objects.filter(
+            user=request.user, author=author
+        ).exists()
+    else:
+        following = False
     context = {
         'count': count,
         'author': author,
         'page_obj': page_obj,
+        'following': following,
 
     }
     return render(request, 'posts/profile.html', context)
@@ -126,7 +133,7 @@ def profile_unfollow(request, username):
     is_follower = Follow.objects.filter(user=request.user, author=author)
     if is_follower.exists():
         is_follower.delete()
-    return redirect('profile', username=author)
+    return redirect('profile', username=username)
 
 
 def page_not_found(request, exception):
@@ -138,7 +145,3 @@ def page_not_found(request, exception):
         {"path": request.path},
         status=404
     )
-
-
-def server_error(request):
-    return render(request, "misc/500.html", status=500)
