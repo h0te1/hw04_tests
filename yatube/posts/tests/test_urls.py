@@ -101,4 +101,4 @@ class PostURLTests(TestCase):
         """Страница /unexisting_page/ возвращает 404."""
         response = self.client.get('/unexisting_page/')
         self.assertEqual(response.status_code, 404)
-        self.assertRedirects()
+        self.assertTemplateUsed(response, 'core/404.html')
