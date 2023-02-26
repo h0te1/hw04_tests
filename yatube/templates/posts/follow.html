@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load cache %}
 {% block title %}
   подписки
 {% endblock %}
 {% block content %}
-{% load cache %}
+  {% include 'posts/includes/switcher.html' %}
   {% cache 20 index_page %}
   {% for post in page_obj %}
     {% include 'posts/includes/card_of_post.html'%}

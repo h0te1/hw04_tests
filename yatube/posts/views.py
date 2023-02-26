@@ -133,7 +133,7 @@ def profile_unfollow(request, username):
     is_follower = Follow.objects.filter(user=request.user, author=author)
     if is_follower.exists():
         is_follower.delete()
-    return redirect('profile', username=username)
+    return redirect('posts:profile', username=username)
 
 
 def page_not_found(request, exception):

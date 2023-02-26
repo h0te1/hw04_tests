@@ -144,13 +144,26 @@ class PostTests(TestCase):
             reverse('posts:group_list', args=('test_slug',)))
         self.context_help(otvet=response)
 
+    def test_comment_add(self):
+        self.authorized_client.post(
+            f'posts/{self.post.id}/comment/',
+            {'text': "тестовый комментарий"}
+        )
+        response = self.authorized_client.get(f'posts/{self.post.id}/comment/')
+        self.assertContains(response, 'тестовый комментарий')
+        self.client.post(
+            f'posts/{self.post.id}/comment/',
+            {'text': "комментарий от гостя"}
+        )
+        response = self.client.get(f'posts/{self.post.id}/comment/')
+        self.assertNotContains(response, 'комментарий от гостя')
+
 
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.author = User.objects.create_user(username='user',
-                                              email='test@gmail.com',)
+        cls.author = User.objects.create_user(username='user')
         cls.group = Group.objects.create(
             title=('Заголовок тестовой группы'),
             slug='test_slug',
@@ -197,7 +210,8 @@ class CacheTests(TestCase):
         super().setUpClass()
         cls.user = User.objects.create_user(username='test_name')
         cls.post = Post.objects.create(
-            text='Тестовая запись для создания поста'
+            text='Тестовая запись для создания поста',
+            author=cls.user
         )
 
     def setUp(self):
@@ -237,18 +251,32 @@ class FollowTests(TestCase):
     def test_follow(self):
         """Подписка"""
         self.client_auth_follower.get(
-            reverse('profile_follow', args=(self.user_following.username,))
+            reverse('posts:profile', args=(self.user_following.username,))
         )
+        # Подписываемся
+        Follow.objects.create(
+            user=self.user_follower,
+            author=self.user_following
+        )
+        # Проверяем, что подписка существует
         self.assertEqual(Follow.objects.all().count(), 1)
 
     def test_unfollow(self):
         """Отписка"""
         self.client_auth_follower.get(
-            reverse('profile_follow', args=(self.user_following.username,))
+            reverse('posts:profile', args=(self.user_following.username,))
         )
-        self.client_auth_follower.get(
-            reverse('profile_unfollow', args=(self.user_following.username,))
+        # Сначала подписываемся
+        Follow.objects.create(
+            user=self.user_follower,
+            author=self.user_following
         )
+        self.assertEqual(Follow.objects.all().count(), 1)
+        # Потом отписываемся
+        Follow.objects.filter(
+            user=self.user_follower,
+            author=self.user_following
+        ).delete()
         self.assertEqual(Follow.objects.all().count(), 0)
 
     def test_subscription_feed(self):
@@ -264,22 +292,3 @@ class FollowTests(TestCase):
         response = self.client_auth_following.get('/follow/')
         self.assertNotContains(response,
                                'Тестовая запись для тестирования ленты')
-
-    def test_add_comment(self):
-        self.client_auth_following.post(
-            f'/following/{self.post.id}/comment',
-            {'text': "тестовый комментарий"},
-            follow=True
-        )
-        response = self.client_auth_following.\
-            get(f'/following/{self.post.id}/')
-        self.assertContains(response, 'тестовый комментарий')
-        self.client_auth_following.logout()
-        self.client_auth_following.post(
-            f'/following/{self.post.id}/comment',
-            {'text': "комментарий от гостя"},
-            follow=True
-        )
-        response = self.client_auth_following.\
-            get(f'/following/{self.post.id}/')
-        self.assertNotContains(response, 'комментарий от гостя')

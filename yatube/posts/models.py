@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-from core.models import CreatedModel
-
 User = get_user_model()
 
 
@@ -27,7 +25,7 @@ class Group(models.Model):
         return f'{self.title}'
 
 
-class Post(CreatedModel):
+class Post(models.Model):
     text = models.TextField(
         verbose_name='Текст поста',
         help_text='Введите текст поста',
@@ -54,6 +52,10 @@ class Post(CreatedModel):
         blank=True,
         help_text='вы можете вставить картинку'
     )
+    created = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
+    )
 
     class Meta:
         ordering = ('-created',)
@@ -65,7 +67,7 @@ class Post(CreatedModel):
         return f'{self.text[:15]}'
 
 
-class Comment(CreatedModel):
+class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -83,6 +85,10 @@ class Comment(CreatedModel):
         help_text='Введите текст',
         blank=False,
         null=True,
+    )
+    created = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
     )
 
 
