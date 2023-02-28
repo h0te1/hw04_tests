@@ -144,18 +144,24 @@ class PostTests(TestCase):
             reverse('posts:group_list', args=('test_slug',)))
         self.context_help(otvet=response)
 
-    def test_comment_add(self):
+    def test_add_comment(self):
         self.authorized_client.post(
-            f'posts/{self.post.id}/comment/',
-            {'text': "тестовый комментарий"}
+            reverse('posts:add_comment', args=(self.post.id,)),
+            {'text': "тестовый комментарий"},
+            follow=True
         )
-        response = self.authorized_client.get(f'posts/{self.post.id}/comment/')
+        response = self.authorized_client.get(
+            reverse('posts:post_detail', args=(self.post.id,))
+        )
         self.assertContains(response, 'тестовый комментарий')
         self.client.post(
-            f'posts/{self.post.id}/comment/',
-            {'text': "комментарий от гостя"}
+            reverse('posts:add_comment', args=(self.post.id,)),
+            {'text': "комментарий от гостя"},
+            follow=True
         )
-        response = self.client.get(f'posts/{self.post.id}/comment/')
+        response = self.client.get(
+            reverse('posts:post_detail', args=(self.post.id,))
+        )
         self.assertNotContains(response, 'комментарий от гостя')
 
 
@@ -273,7 +279,7 @@ class FollowTests(TestCase):
         )
         self.assertEqual(Follow.objects.all().count(), 1)
         # Потом отписываемся
-        Follow.objects.filter(
+        Follow.objects.get(
             user=self.user_follower,
             author=self.user_following
         ).delete()
@@ -285,10 +291,12 @@ class FollowTests(TestCase):
             user=self.user_follower,
             author=self.user_following,
         )
-        response = self.client_auth_follower.get('/follow/')
-        post_text_0 = response.context['page_obj'][0].text
-        self.assertEqual(post_text_0, 'Тестовая запись для тестирования ленты')
+        example = Post.objects.first()
+        response = self.client_auth_follower.get(reverse('posts:follow_index'))
+        post_in_follow = response.context['favorites'][0]
+        self.assertEqual(post_in_follow, example)
         # в качестве неподписанного пользователя проверяем собственную ленту
-        response = self.client_auth_following.get('/follow/')
-        self.assertNotContains(response,
-                               'Тестовая запись для тестирования ленты')
+        response = self.client_auth_following.get(
+            reverse('posts:follow_index'))
+        lenght = len(response.context.get('favorites').object_list)
+        self.assertEqual(lenght, 0)

@@ -51,11 +51,11 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post = Post.objects.get(id=post_id)
-    comments = Comment.objects.get(post=post)
+    comment_post = Post.objects.get(id=post_id)
+    comments = Comment.objects.filter(post=comment_post)
     form = CommentForm(request.POST or None)
     context = {
-        'post': post,
+        'post': comment_post,
         'form': form,
         'comments': comments,
     }
